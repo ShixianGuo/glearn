@@ -134,9 +134,9 @@ void handleWrite(int efd, int fd) {
 }
 
 void loop_once(int efd, int lfd, int waitms) {
-    const int kMaxEvents = 20;
+    const int k_max_events = 20;
     struct epoll_event active_evs[100];
-    int n = epoll_wait(efd, active_evs, kMaxEvents, waitms);
+    int n = epoll_wait(efd, active_evs, k_max_events, waitms);
     
     log("epoll_wait return %d\n", n);
     
