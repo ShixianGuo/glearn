@@ -92,7 +92,7 @@ int main(int argc,char**argv){
                     epoll_ctl(epfd,EPOLL_CTL_DEL,i,&ev);
 
                 }
-                else if(length==0){ //断开一个连接
+                else if(length==0){ //正常断开一个连接
                     printf("disconnect %d\n",i);
                     close(i);
                     ev=events[i];
