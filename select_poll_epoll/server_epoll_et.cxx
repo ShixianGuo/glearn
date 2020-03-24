@@ -27,6 +27,25 @@ using namespace std;
         exit(1);                                                                                 \
     }
 
+
+struct Con {
+    string readed;
+    size_t written;
+    Con() : written(0) {}
+};
+map<int, Con> cons;
+string http_res;
+
+void set_nonblock(int fd);
+
+void update_events(int efd, int fd, int events, int op);
+void handle_accept(int efd, int fd);
+void send_res(int fd);
+void handle_read(int efd, int fd);
+void handle_write(int efd, int fd);
+
+void loop_once(int efd, int lfd, int waitms);
+
 void set_nonblock(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     exit_if(flags < 0, "fcntl failed");
@@ -39,12 +58,16 @@ void update_events(int efd, int fd, int events, int op) {
     memset(&ev, 0, sizeof(ev));
     ev.events = events;
     ev.data.fd = fd;
-    log("%s fd %d events read %d write %d\n", op == EPOLL_CTL_MOD ? "mod" : "add", fd, ev.events & EPOLLIN, ev.events & EPOLLOUT);
+    log("%s fd %d events read %d write %d\n",
+     op == EPOLL_CTL_MOD ? "mod" : "add", 
+     fd,
+     ev.events & EPOLLIN, 
+     ev.events & EPOLLOUT);
     int r = epoll_ctl(efd, op, fd, &ev);
     exit_if(r, "epoll_ctl failed");
 }
 
-void handleAccept(int efd, int fd) {
+void handle_accept(int efd, int fd) {
     struct sockaddr_in raddr;
     socklen_t rsz = sizeof(raddr);
     int cfd = accept(fd, (struct sockaddr *) &raddr, &rsz);
@@ -57,21 +80,16 @@ void handleAccept(int efd, int fd) {
     set_nonblock(cfd);
     update_events(efd, cfd, EPOLLIN | EPOLLOUT | EPOLLET, EPOLL_CTL_ADD);
 }
-struct Con {
-    string readed;
-    size_t written;
-    Con() : written(0) {}
-};
-map<int, Con> cons;
 
-string httpRes;
+
+
 void send_res(int fd) {
     Con &con = cons[fd];
     if (!con.readed.length())
         return;
-    size_t left = httpRes.length() - con.written;
+    size_t left = http_res.length() - con.written;
     int wd = 0;
-    while ((wd = ::write(fd, httpRes.data() + con.written, left)) > 0) {
+    while ((wd = ::write(fd, http_res.data() + con.written, left)) > 0) {
         con.written += wd;
         left -= wd;
         log("write %d bytes left: %lu\n", wd, left);
@@ -93,7 +111,7 @@ void send_res(int fd) {
 void handle_read(int efd, int fd) {
     char buf[4096];
     int n = 0;
-    while ((n = ::read(fd, buf, sizeof buf)) > 0) {
+    while ((n = read(fd, buf, sizeof buf)) > 0) {
         log("read %d bytes\n", n);
         string &readed = cons[fd].readed;
         readed.append(buf, n);
@@ -130,7 +148,7 @@ void loop_once(int efd, int lfd, int waitms) {
         int events = active_evs[i].events;
         if (events & (EPOLLIN | EPOLLERR)) {
             if (fd == lfd) {
-                handleAccept(efd, fd);
+                handle_accept(efd, fd);
             } else {
                 handle_read(efd, fd);
             }
@@ -143,12 +161,12 @@ void loop_once(int efd, int lfd, int waitms) {
     }
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc, char **argv) {
 
-    ::signal(SIGPIPE, SIG_IGN);
-    httpRes = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 48576\r\n\r\n123456";
+    signal(SIGPIPE, SIG_IGN);
+    http_res = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 48576\r\n\r\n123456";
     for (int i = 0; i < 48570; i++) {
-        httpRes += '\0';
+        http_res += '\0';
     }
     unsigned short port = 80;
     int epollfd = epoll_create(1);

@@ -21,12 +21,36 @@ using namespace std;
     #define log(format, ...)
 #endif
 
-#define exit_if(r, ...)                                                                      \
-if (r) {                                                                                     \
-    log(__VA_ARGS__);                                                                        \
-    log("error no: %d, error msg : %s", errno, strerror(errno));                             \
-    exit(1);                                                                                 \
-}
+
+#define exit_if(r, ...)                                                                          \
+    if (r) {                                                                                     \
+        log(__VA_ARGS__);                                                                        \
+        log("%s:%d error no: %d error msg %s\n", __FILE__, __LINE__, errno, strerror(errno));    \
+        exit(1);                                                                                 \
+    }
+
+
+
+struct Con {
+    string readed;
+    size_t written;
+    bool writeEnabled;
+    Con() : written(0), writeEnabled(false) {}
+};
+map<int, Con> cons;
+string http_res;
+
+void set_nonblock(int fd);
+
+void update_events(int efd, int fd, int events, int op);
+void handle_accept(int efd, int fd);
+void send_res(int efd, int fd);
+void handle_read(int efd, int fd);
+void handle_write(int efd, int fd);
+
+void loop_once(int efd, int lfd, int waitms);
+
+
 
 void set_nonblock(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -63,20 +87,12 @@ void handle_accept(int efd, int fd) {
     update_events(efd, cfd, EPOLLIN, EPOLL_CTL_ADD);
 }
 
-struct Con {
-    string readed;
-    size_t written;
-    bool writeEnabled;
-    Con() : written(0), writeEnabled(false) {}
-};
-map<int, Con> cons;
 
-string http_res;
 void send_res(int efd, int fd) {
     Con &con = cons[fd];
     size_t left = http_res.length() - con.written;
     int wd = 0;
-    while ((wd = ::write(fd, http_res.data() + con.written, left)) > 0) {
+    while ((wd = write(fd, http_res.data() + con.written, left)) > 0) {
         con.written += wd;
         left -= wd;
         log("write %d bytes left: %lu\n", wd, left);
@@ -129,7 +145,7 @@ void handle_read(int efd, int fd) {
     cons.erase(fd);
 }
 
-void handleWrite(int efd, int fd) {
+void handle_write(int efd, int fd) {
     send_res(efd, fd);
 }
 
@@ -151,7 +167,7 @@ void loop_once(int efd, int lfd, int waitms) {
             }
         } else if (events & EPOLLOUT) {
             log("handling epollout\n");
-            handleWrite(efd, fd);
+            handle_write(efd, fd);
         } else {
             exit_if(1, "unknown event");
         }

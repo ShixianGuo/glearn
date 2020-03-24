@@ -138,21 +138,6 @@ poll的优缺点
 >4-调用返回后需要轮询所有描述符来获取已经就绪的描述符
 
 ## epoll
-epoll的接口原型
-```
-int epoll_create(int size); //成功时返回epoll文件描述符，失败时返回-1
-int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event); //成功时返回0，失败时返回-1
-int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout); //成功时返回发生事件的文件描述数，失败时返回-1
-```
-水平触发与边缘触发
->水平触发：一次读取之后，套接字缓冲区里还有数据，再调用epoll_wait，该套接字的EPOLL_IN事件还是会被注册  
->边缘触发：一次读取之后，套接字缓冲区里还有数据，再调用epoll_wait，该套接字的EPOLL_IN事件不会被注册，除非在这期间，该套接字收到了新的数据。
-
-个人觉得 并不是所有时候边缘就代表高并发和高性能 如果数据块太大 这个时候其实用LT模型更好一些 
-
-给出[epoll-LT模型的使用](https://gitee.com/shixianguo/glearn/blob/master/select_poll_epoll/server_epoll_lt.cxx)
-
-给出[epoll-ET模型的使用](https://gitee.com/shixianguo/glearn/blob/master/select_poll_epoll/server_epoll_et.cxx)
 
 epoll大概原理
 ```
