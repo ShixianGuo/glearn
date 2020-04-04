@@ -23,7 +23,7 @@ typedef unsigned int uint32;
 
 #define ETH_MAX_LENGTH 6
 
-struct ethhdr{  //以太网投
+struct ethhdr{  //以太网头
    unsigned char h_dest[ETH_MAX_LENGTH];  //目的地址
    unsigned char h_source[ETH_MAX_LENGTH];//源地址
 
