@@ -329,4 +329,82 @@ Linux实现中，有延迟ACK和快速ACK，并根据当前的包的收发情况
 
 
 
+## 疑症8：TCP的重传机制以及重传的超时计算
+
+为了使我们的重传机制更高效，如果我们能够比较准确知道在当前网络状况下，一个数据包从发出去到回来的时间RTT——Round Trip Time，那么根据这个RTT我们就可以方便设置TimeOut——RTO（Retransmission TimeOut）了。   
+
+TCP的重传是由超时触发的，这会引发一个重传选择问题，假设TCP发送端连续发了1、2、3、4、5、6、7、8、9、10共10包，其中4、6、8这3个包全丢失了，由于TCP的ACK是确认最后连续收到序号  
+
+这样发送端只能收到3号包的ACK，这样在TIME_OUT的时候，发送端就面临下面两个重传选择：  
+* 1）仅重传4号包；
+* 2）重传3号后面所有的包，也就是重传4~10号包。
+
+快速重传： 连续收到3个相同的ACK，那么说明当前的网络状况变好了，可以重传丢失的包了  
+
+快速重传解决了timeout的问题，但是没解决重传一个还是重传多个的问题。出现难以决定是否重传多个包问题的根源在于，发送端不知道那些非连续序号的包已经到达接收端了，但是接收端是知道的，如果接收端告诉一下发送端不就可以解决这个问题吗？  
+
+于是，RFC2018提出了Selective Acknowledgment (SACK，选择确认)机制
+
+SACK依靠接收端的接收情况反馈，解决了重传风暴问题，这样够了吗？接收端能不能反馈更多的信息呢？显然是可以的，  
+于是，RFC2883对对SACK进行了扩展，提出了D-SACK，也就是利用第一块SACK数据中描述重复接收的不连续数据块的序列号参数，其他SACK数据则描述其他正常接收到的不连续数据。  
+这样发送方利用第一块SACK，可以发现数据段被网络复制、错误重传、ACK丢失引起的重传、重传超时等异常的网络状况，使得发送端能更好调整自己的重传策略。   
+
+
+# TCP的异常关闭
+
+## 服务器端只Recv消息而不Send消息
+
+1）客户端程序正常运行的情况下，拔掉网线，杀掉客户端程序  
+* 目的：模拟客户端死机、系统突然重启、网线松动或网络不通等情况。
+* 结论：这种情况下服务器程序没有检测到任何异常，并最后等待“超时”才断开TCP连接  
+
+2）客户端程序发送很多数据包后正常关闭Socket并exit进程(或不退出进程)：
+* 目的：模拟客户端发送完消息后正常退出的情况。
+* 结论：这种情况下服务器程序能够成功接收完所有消息，并最后收到“对端关闭”（Recv返回零）消息。
+
+3）客户端程序发送很多数据包后不关闭Socket直接exit进程  
+* 目的：模拟客户端程序退出而忘记关闭Socket的情况（比如通过Windows窗口的关闭图标退出进程，而没有捕获相应关闭事件做正常退出处理等）。
+* 结论：这种情况下服务器程序能够收到部分TCP消息，然后收到“104: Connection reset by peer”（Linux下）或“10054: An existing connection was forcibly closed by the remote host”（Windows下）错误。  
+
+4）客户端程序发送很多数据包的过程中直接Kill进程：  
+* 目的：模拟客户端程序崩溃或非正常方式结束进程（比如Linux下"kill -9"或Windows的任务管理器杀死进程）的情况。
+* 结论：这种情况下服务器程序很快收到“104: Connection reset by peer”（Linux下）或“10054: An existing connection was forcibly closed by the remote host”（Windows下）错误
+
+## 服务器端Recv消息并Send应答消息
+
+1）客户端程序发送很多数据包后正常关闭Socket并exit进程（或不退出进程）：
+* 目的：模拟客户端正常关闭Socket后，服务器端在检查到TCP对端关闭前向客户端发送消息的情况。  
+* 结论：这种情况下服务器程序接收和发送部分TCP消息后，在Send消息时产生“32: Broken pipe”（Linux下）或“10053: An established connection was aborted by the software in your host machine”（Windows下）错误。
+
+2）客户端程序发送很多数据包后不关闭Socket直接exit或Kill进程：
+*  目的：模拟客户端程序退出而忘记关闭Socket、或客户端程序崩溃或非正常方式结束进程的情况。
+*  结论：这种情况下服务器程序在Recv或Send消息时产生“104: Connection reset by peer”（Linux下）或“10054: An existing connection was forcibly closed by the remote host”（Windows下）错误。
+
+## 总结 
+
+1）当TCP连接的进程在忘记关闭Socket而退出、程序崩溃、或非正常方式结束进程的情况下：
+* （Windows客户端），会导致TCP连接的对端进程产生“104: Connection reset by peer”（Linux下）或“10054: An existing connection was forcibly closed by the remote host”（Windows下）错误。
+2）当TCP连接的进程机器发生死机、系统突然重启、网线松动或网络不通等情况下：
+* （Windows客户端），连接的对端进程可能检测不到任何异常，并最后等待“超时”才断开TCP连接。
+
+3）当TCP连接的进程正常关闭Socket时，对端进程在检查到TCP关闭事件之前仍然向TCP发送消息：
+* （Windows客户端），则在Send消息时会产生“32: Broken pipe”（Linux下）或“10053: An established connection was aborted by the software in your host machine”（Windows下）错误。
+
+
+## TCP异常进一步测试研究  
+
+1）服务器端已经close了Socket，客户端再发送数据：  
+* 目的：测试在TCP对端进程已经关闭Socket时，本端进程还未检测到连接关闭的情况下继续向对端发送消息。
+* 结论：第一包可以发送成功，但第二包发送失败，错误码为“10053: An established connection was aborted by the software in your host machine”（Windows下）或“32: Broken pipe，同时收到SIGPIPE信号”（Linux下）错误。  
+
+2）服务器端发送数据到TCP后close了Socket，客户端再发送一包数据，然后接收消息：
+* 目的：测试在TCP对端进程发送数据后关闭Socket，本端进程还未检测到连接关闭的情况下发送一包消息，接着接收消息。
+* 结论：客户端能够成功发送第一包数据（这会导致服务器端发送一个RST包 <已抓包验证>），客户端再去Recv时，对于Windows和Linux程序有如下不同的表现：
+        - 2.1）Windows客户端程序：Recv失败，错误码为“10053: An established connection was aborted by the software in your host machine”；
+        - 2.2）Linux客户端程序：能正常接收完所有消息包，最后收到正常的对端关闭消息（这一点与Window下不一样，RST包没有被提前接收到  
+
+3）服务器端在TCP的接收缓冲区中还有未接收数据的情况下close了Socket，客户端再收包：  
+* 目的：测试在TCP的接收缓冲区中还有未接收数据的情况下关闭Socket时，对端进程是否正常。
+* 结论：这种情况服务器端就会向对端发送RST包，而不是正常的FIN包（已经抓包证明），这就会导致客户端提前（RST包比正常数据包先被收到）收到“10054: An existing connection was forcibly closed by the remote host”（Windows下）或“104: Connection reset by peer”（Linux下）错误。
+
 
