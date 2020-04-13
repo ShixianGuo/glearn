@@ -126,7 +126,7 @@ Proactor 是和异步 I/O 相关的，详细方案如下：
 Proactor 增加了编程的复杂度，但给工作线程带来了更高的效率。Proactor 可以在 系统态将读写优化，利用 I/O 并行能力，提供一个高性能单线程模型。在 windows 上， 由于没有 epoll 这样的机制，因此提供了 IOCP 来支持高并发， 由于操作系统做了较好的 优化，windows 较常采用 Proactor 的模型利用完成端口来实现服务器。在 linux 上，在 2.6 内核出现了 aio 接口，但 aio 实际效果并不理想，它的出现主要是解决 poll 性能不佳的问题，但实际上经过测试，epoll 的性能高于 poll+aio，并且aio 不能处理 accept， 因此 linux 主要还是以 Reactor 模型为主。   
 
 
-## 同步 I/O 模拟 Proactor 模型 
+## 同步I/O 模拟 Proactor 模型 
 
 <div align="center"> <img src="pic/同步IO模拟Proactor.png"/> </div>
 
