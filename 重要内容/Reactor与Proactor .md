@@ -1,13 +1,3 @@
----
-layout: post
-title: '服务器模型Reactor与Proactor'
-subtitle: ''
-date: 2019-09-19
-categories: 技术
-cover: 'http://on2171g4d.bkt.clouddn.com/jekyll-theme-h2o-postcover.jpg'
-tags: 网络编程 
----
-
 ## 前言
 网络连接上的消息处理，可以分为两个阶段：**等待消息准备好、消息处理**。  
 
