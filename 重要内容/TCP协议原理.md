@@ -408,6 +408,9 @@ SACK依靠接收端的接收情况反馈，解决了重传风暴问题，这样�
 * 结论：这种情况服务器端就会向对端发送RST包，而不是正常的FIN包（已经抓包证明），这就会导致客户端提前（RST包比正常数据包先被收到）收到“10054: An existing connection was forcibly closed by the remote host”（Windows下）或“104: Connection reset by peer”（Linux下）错误。
 
 
+  
+
+
 
 
 
