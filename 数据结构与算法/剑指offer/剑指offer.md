@@ -634,6 +634,89 @@ public:
 
 ```
 
+## [面试题15. 二进制中1的个数](https://leetcode-cn.com/problems/er-jin-zhi-zhong-1de-ge-shu-lcof/)
+
+方法一：逐位判断  
+
+根据 与运算 定义，设二进制数字 nn ，则有：
+若 n \& 1 = 0n&1=0 ，则 nn 二进制 最右一位 为 00 ；
+若 n \& 1 = 1n&1=1 ，则 nn 二进制 最右一位 为 11 。
+根据以上特点，考虑以下 循环判断 ：
+判断 nn 最右一位是否为 11 ，根据结果计数。
+将 nn 右移一位（本题要求把数字 nn 看作无符号数，因此使用 无符号右移 操作）
+
+```cpp
+class Solution {
+public:
+	int hammingWeight(uint32_t n) {
+		int res = 0;
+		while (n != 0) {
+			res += n & 1;
+			n >>= 1;
+		}
+		return res;
+	}
+};
+
+```
+
+方法二：巧用 n \& (n - 1)n&(n−1)  
+(n−1) 解析： 二进制数字 nn 最右边的 11 变成 00 ，此 11 右边的 00 都变成 11 。
+n \& (n - 1)n&(n−1) 解析： 二进制数字 nn 最右边的 11 变成 00 ，其余不变  
+
+<div align="center"> <img src="pic/JZ15.png"/> </div>
+
+```cpp
+class Solution {
+public:
+	int hammingWeight(uint32_t n) {
+		int res = 0;
+		while (n != 0) {
+			res++;
+			n &= n - 1;
+		}
+		return res;
+	}
+};
+```
+
+## [面试题16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
+
+快速幂解析（二分法角度）：  
+快速幂实际上是二分思想的一种应用  
+
+<div align="center"> <img src="pic/JZ16.png"/> </div>
+
+转化为位运算：
+向下整除 n // 2n//2 等价于 右移一位 n >> 1n>>1 ；
+取余数 n \% 2n%2 等价于 判断二进制最右一位值 n \& 1n&1
+
+
+```cpp
+class Solution {
+public:
+	double myPow(double x, int n) {
+		if (x == 0) return 0;
+		long  b = n;
+		double res = 1.0;
+
+		if (b < 0) {
+			x = 1 / x;
+			b = -b;
+		}
+
+
+		while (b > 0) {
+			if ((b & 1) == 1) res *= x;
+			x *= x;
+			b >>= 1;
+		}
+		return res;
+	}
+
+};
+```
+
 
 
 
