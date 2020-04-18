@@ -331,4 +331,99 @@ public:
 
 <div align="center"> <img src="pic/JZ11.png"/> </div>
 
+算法流程：
+循环二分： 设置 ii, jj 指针分别指向 numbers 数组左右两端，m = (i + j) // 2 为每次二分的中点（ "//" 代表向下取整除法，因此恒有 i \leq m < ji≤m<j ），可分为以下三种情况：
+* 当 numbers[m] > numbers[j]时： mm 一定在 左排序数组 中，即旋转点 xx 一定在 [m + 1, j][m+1,j] 闭区间内，因此执行 i = m + 1i=m+1；
+* 当 numbers[m] < numbers[j] 时： mm 一定在 右排序数组 中，即旋转点 xx 一定在[i, m][i,m] 闭区间内，因此执行 j = mj=m；
+* 当 numbers[m] == numbers[j] 时： 无法判断 mm 在哪个排序数组中，即无法判断旋转点 xx 在 [i, m][i,m] 还是 [m + 1, j][m+1,j] 区间中。解决方案： 执行 j = j - 1j=j−1 缩小判断范围 （分析见以下内容） 
+
+```cpp
+class Solution {
+public:
+	int minArray(vector<int>& numbers) {
+		int i = 0, j = numbers.size() - 1;
+		while (i<j)
+		{
+			int m = (i + j) / 2;
+			if (numbers[m] > numbers[j]) i = m + 1;
+			else if (numbers[m] < numbers[j]) j = m;
+			else j--;
+		}
+		return numbers[i];
+	}
+};
+
+```
+
+## [面试题12. 矩阵中的路径](https://leetcode-cn.com/problems/ju-zhen-zhong-de-lu-jing-lcof/)
+
+解题思路：  
+本问题是典型的矩阵搜索问题，可使用 深度优先搜索（DFS）+ 剪枝 解决。
+
+算法原理：  
+深度优先搜索： 可以理解为暴力法遍历矩阵中所有字符串可能性。DFS 通过递归，先朝一个方向搜到底，再回溯至上个节点，沿另一个方向搜索，以此类推。  
+
+剪枝： 在搜索中，遇到 这条路不可能和目标字符串匹配成功 的情况（例如：此矩阵元素和目标字符不同、此元素已被访问），则应立即返回，称之为 可行性剪枝 。
+
+DFS模板
+
+```cpp
+int check(参数)
+{
+    if(满足条件)
+        return 1;
+    return 0;
+}
+ 
+void dfs(int step)
+{
+        判断边界
+        {
+            相应操作
+        }
+        尝试每一种可能
+        {
+               满足check条件
+               标记
+               继续下一步dfs(step+1)
+               恢复初始状态（回溯的时候要用到）
+        }
+}   
+``` 
+
+```cpp
+class Solution {
+public:
+	bool dfs(vector<vector<char>>& board, string word,int i, int j,int k) {
+		   
+		if (i >= board.size() || i<0 || j>board[0].size() || j < 0 || board[i][j] != word[k]) {
+			return false;
+		}
+
+		if (k == word.size() - 1)  return true;
+		
+		char tmp = board[i][j];
+		board[i][j] = '/';
+		bool res = dfs(board, word, i + 1, j, k + 1) || 
+			       dfs(board, word, i - 1, j, k + 1) ||
+			       dfs(board, word, i, j+1, k + 1)   || 
+			       dfs(board, word, i, j-1, k + 1);
+		board[i][j] = tmp;
+		return res;
+	}
+
+	bool exist(vector<vector<char>>& board, string word) {
+		for (int i = 0; i < board.size(); i++)
+		{
+			for (int j = 0; j < board[0].size(); j++)
+			{
+				if (dfs(board,word,i,j,0)) return true;
+			}
+		}
+		return false;
+	}
+};
+
+
+```
 
