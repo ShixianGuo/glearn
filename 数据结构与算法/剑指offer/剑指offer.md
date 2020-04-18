@@ -424,6 +424,223 @@ public:
 	}
 };
 
+```
+
+## [面试题13. 机器人的运动范围](https://leetcode-cn.com/problems/ji-qi-ren-de-yun-dong-fan-wei-lcof/)
+
+
+方法一：深度优先遍历 DFS    
+
+
+递归参数： 当前元素在矩阵中的行列索引 i 和 j ，两者的数位和 si, sj 。
+终止条件： 当 ① 行列索引越界 或 ② 数位和超出目标值 k 或 ③ 当前元素已访问过 时，返回 00 ，代表不计入可达解。  
+
+递推工作：
+ 标记当前单元格 ：将索引 (i, j) 存入 Set visited 中，代表此单元格已被访问过。
+ 搜索下一单元格： 计算当前元素的 下、右 两个方向元素的数位和，并开启下层递归 。
+ 回溯返回值： 返回 1 + 右方搜索的可达解总数 + 下方搜索的可达解总数，代表从本单元格递归搜索的可达解总数。  
+
+
+```cpp
+
+
+class Solution {
+public:
+
+	int m, n, k;
+	vector<vector<bool>>visited;
+	int get(int x) {
+		int res = 0;
+		for (; x; x /= 10) {
+			res += x % 10;
+		}
+		return res;
+	}
+
+	//当前元素在矩阵中的行列索引 i 和 j ，两者的数位和 si, sj 
+	int dfs(int i,int j,int si,int sj) {
+		
+		if (i >= m || j >= n || k < si + sj || visited[i][j]) return 0;
+		visited[i][j] = true;
+
+		//1 + 右方搜索的可达解总数 + 下方搜索的可达解总数，
+		return 1 + dfs(i + 1, j, get(i+1), sj)
+			     + dfs(i, j + 1, si,get(j+1));
+	}
+
+	int movingCount(int m, int n, int k) {
+	   this->m = m; this->n = n; this->k = k;
+	   visited.resize(m, vector<bool>(n,false));
+	   return dfs(0,0,0,0);
+	}
+};
+```
+
+方法二：广度优先遍历 BFS  
+
+BFS/DFS ： 两者目标都是遍历整个矩阵，不同点在于搜索顺序不同。DFS 是朝一个方向走到底，再回退，以此类推；BFS 则是按照“平推”的方式向前搜索。  
+BFS 实现： 通常利用队列实现广度优先遍历。  
+
+
+算法解析：  
+
+初始化： 将机器人初始点 (0, 0)(0,0) 加入队列 queue ；
+迭代终止条件： queue 为空。代表已遍历完所有可达解。
+迭代工作：
+单元格出队： 将队首单元格的 索引、数位和 弹出，作为当前搜索单元格。
+判断是否跳过： 若 ① 行列索引越界 或 ② 数位和超出目标值 k 或 ③ 当前元素已访问过 时，执行 continue 。
+标记当前单元格 ：将单元格索引 (i, j) 存入 Set visited 中，代表此单元格 已被访问过 。
+单元格入队： 将当前元素的 下方、右方 单元格的 索引、数位和 加入 queue 。
+返回值： Set visited 的长度 len(visited) ，即可达解的数量。  
+
+BFS使用队列，把每个还没有搜索到的点一次放入队列，然后再弹出队列的头部元素当做当前遍历点。
+
+如果不需要确定当前遍历到了哪一层，BFS模板如下。  
+```python
+while queue 不空：
+    cur = queue.pop()
+    for 节点 in cur的所有相邻节点：
+        if 该节点有效且未访问过：
+            queue.push(该节点)
+```
+
+如果要确定当前遍历到了哪一层，BFS模板如下。  
+这里增加了level表示当前遍历到二叉树中的哪一层了，也可以理解为在一个图中，现在已经走了多少步了。size表示在开始遍历新的一层时，队列中有多少个元素，即有多少个点需要向前走一步。
+
+```python
+level = 0
+while queue 不空：
+    size = queue.size()
+    while (size --) {
+        cur = queue.pop()
+        for 节点 in cur的所有相邻节点：
+            if 该节点有效且未被访问过：
+                queue.push(该节点)
+    }
+    level ++;
+```  
+
+```cpp
+class Solution {
+public:
+
+	int get(int x) {
+		int res = 0;
+		for (; x; x /= 10) {
+			res += x % 10;
+		}
+		return res;
+	}
+
+	int movingCount(int m, int n, int k) {
+	
+		vector<vector<bool>>visited(m, vector<bool>(n, false));
+	
+		queue<vector<int>> que;
+	    que.push(vector<int>{0,0,0,0});
+
+		int res = 0;
+
+		while (!que.empty())
+		{
+			vector<int>x = que.front();que.pop();
+
+			int i = x[0], j = x[1], si = x[2], sj = x[3];
+
+			if (i >= m || j >= n || k < si + sj || visited[i][j]) continue;
+			visited[i][j] = true;
+			res++;
+
+			que.push(vector<int>{i + 1, j, get(i + 1), sj});
+			que.push(vector<int>{i, j + 1, si, get(j + 1)});
+		}
+
+		return res;
+	}
+};
 
 ```
+
+
+## [面试题14- I. 剪绳子](https://leetcode-cn.com/problems/jian-sheng-zi-lcof/)
+
+切分规则：    
+最优： 33 。把绳子尽可能切为多个长度为 33 的片段，留下的最后一段绳子的长度可能为 0,1,20,1,2 三种情况。
+次优： 22 。若最后一段绳子长度为 22 ；则保留，不再拆为 1+11+1 。
+最差： 11 。若最后一段绳子长度为 11 ；则应把一份 3 + 13+1 替换为 2 + 22+2，因为 2 \times 2 > 3 \times 12×2>3×1。
+
+
+算法流程：
+当 n \leq 3n≤3 时，按照规则应不切分，但由于题目要求必须剪成 m>1m>1 段，因此必须剪出一段长度为 11 的绳子，即返回 n - 1n−1 。
+当 n>3n>3 时，求 nn 除以 33 的 整数部分 aa 和 余数部分 bb （即 n = 3a + bn=3a+b ），并分为以下三种情况：
+当 b = 0b=0 时，直接返回 3^a3 
+a
+ ；
+当 b = 1b=1 时，要将一个 1 + 31+3 转换为 2+22+2，因此返回 3^{a-1} \times 43 
+a−1
+ ×4；
+当 b = 2b=2 时，返回 3^a \times 23 
+a
+ ×2。
+
+<div align="center"> <img src="pic/JZ14-1.png"/> </div>
+
+```cpp
+class Solution {
+public:
+	int cuttingRope(int n) {
+		if (n <= 3) return n - 1;
+
+		int a = n / 3, b = n % 3;
+
+		if (b == 0) return (int)pow(3, a);
+		if (b == 1) return (int)pow(3, a - 1) * 4;
+
+		return (int)pow(3, a) * 2;
+	}
+};
+```
+
+## [面试题14- II. 剪绳子 II](https://leetcode-cn.com/problems/jian-sheng-zi-ii-lcof/)
+
+大数求余解法  
+大数越界： 当 aa 增大时，最后返回的 3^a3 
+a
+  大小以指数级别增长，可能超出 int32 甚至 int64 的取值范围，导致返回值错误。
+大数求余问题： 在仅使用 int32 类型存储的前提下，正确计算 x^ax 
+a
+  对 pp 求余（即 x^a \odot px 
+a
+ ⊙p ）的值。
+解决方案： 循环求余 、 快速幂求余 ，其中后者的时间复杂度更低，两种方法均基于以下求余运算规则推出：
+
+```cpp
+class Solution {
+public:
+	int cuttingRope(int n) {
+		vector<long> dp(1001, 0);
+		dp[1] = 1;
+		dp[2] = 1;
+		dp[3] = 2;
+		dp[4] = 4;
+		dp[5] = 6;
+		dp[6] = 9;
+		for (int i = 7; i <= n; i++) {
+			dp[i] = (dp[i - 3] * 3) % 1000000007;
+		}
+		return dp[n];
+	}
+};
+
+```
+
+
+
+
+
+
+
+
+
+
 
