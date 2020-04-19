@@ -719,11 +719,691 @@ public:
 
 
 
+## [面试题17. 打印从1到最大的n位数](https://leetcode-cn.com/problems/da-yin-cong-1dao-zui-da-de-nwei-shu-lcof/)  
+
+```cpp
+class Solution {
+public:
+	vector<int> printNumbers(int n) {
+		vector<int> res;
+		if (n == 0) return res;
+		//打印到数组中
+		for (int i=1,max=pow(10,n);i<max;i++)
+		{
+			res.push_back(i);
+		}
+		return res;
+	}
+}; 
+
+```
+
+## [面试题18. 删除链表的节点](https://leetcode-cn.com/problems/shan-chu-lian-biao-de-jie-dian-lcof/)    
+
+```cpp
+class Solution {
+public:
+    ListNode* deleteNode(ListNode* head, int val) {
+        ListNode* dummy = new ListNode(0);
+        dummy -> next = head;
+        ListNode* prev = dummy;
+        while(prev && prev -> next) {
+            if(prev -> next -> val == val) {
+                prev -> next = prev -> next -> next;
+                break;
+            }
+            prev = prev -> next;
+        }
+        return dummy -> next;
+    }
+};
+
+```  
+
+## [面试题19. 正则表达式匹配](https://leetcode-cn.com/problems/zheng-ze-biao-da-shi-pi-pei-lcof/)  
+
+
+## [面试题20. 表示数值的字符串](https://leetcode-cn.com/problems/biao-shi-shu-zhi-de-zi-fu-chuan-lcof/)
+
+思路：
+1）先去除字符串首尾的空格
+2）然后根据e划分指数和底数
+3）判断指数和底数是否合法即可
+
+```cpp
+class Solution {
+public:
+
+	bool judgeP(string s)//判断底数是否合法
+	{
+		bool result = false, point = false;
+		int n = s.size();
+		for (int i = 0; i < n; ++i)
+		{
+			if (s[i] == '+' || s[i] == '-') {//符号位不在第一位，返回false
+				if (i != 0)return false;
+			}
+			else if (s[i] == '.') {
+				if (point)return false;//有多个小数点，返回false
+				point = true;
+			}
+			else if (s[i]<'0' || s[i]>'9') {//非纯数字，返回false
+				return false;
+			}
+			else {
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	bool judgeS(string s)//判断指数是否合法
+	{
+		bool result = false;
+		//注意指数不能出现小数点，所以出现除符号位的非纯数字表示指数不合法
+		for (int i = 0; i < s.size(); ++i)
+		{
+			if (s[i] == '+' || s[i] == '-') {//符号位不在第一位，返回false
+				if (i != 0)return false;
+			}
+			else if (s[i]<'0' || s[i]>'9') {//非纯数字，返回false
+				return false;
+			}
+			else {
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	
+
+
+	bool isNumber(string s) {
+		//1、从首尾寻找s中不为空格首尾位置，也就是去除首尾空格
+		int i = s.find_first_not_of(' ');   if (i == string::npos) return false;
+		int j = s.find_last_not_of(' ');
+		s = s.substr(i, j - i + 1);  if (s.empty()) return  false;
+
+		//2、根据e来划分底数和指数
+		int e = s.find('e');
+
+		//3、指数为空，判断底数
+		if (e == string::npos)return judgeP(s);
+
+		//4、指数不为空，判断底数和指数
+		else return judgeP(s.substr(0, e)) && judgeS(s.substr(e + 1));
+	}
+};
+```
+
+## [面试题21. 调整数组顺序使奇数位于偶数前面](https://leetcode-cn.com/problems/diao-zheng-shu-zu-shun-xu-shi-qi-shu-wei-yu-ou-shu-qian-mian-lcof/)
+
+考虑定义双指针 ii , jj 分列数组左右两端，循环执行：
+指针 ii 从左向右寻找偶数；
+指针 jj 从右向左寻找奇数；
+将 偶数 nums[i]nums[i] 和 奇数 nums[j]nums[j] 交换。  
+
+可始终保证： 指针 ii 左边都是奇数，指针 jj 右边都是偶数 
+
+<div align="center"> <img src="pic/JZ21.png"/> </div>
+
+```
+class Solution {
+public:
+	void swap(int &a,int&b) {
+		int tmp = a;
+		a = b;
+		b = tmp;
+	}
+
+	vector<int> exchange(vector<int>& nums) {
+		int i = 0; int j = nums.size() - 1;
+		while (i<j)
+		{
+			while (i < j &&nums[i] % 2 == 1) i++;
+			while (i < j &&nums[j] % 2 == 0) j--;
+
+
+			swap(nums[i],nums[j]);
+		}
+
+		return nums;
+	}
+};
+
+```
+
+## [面试题22. 链表中倒数第k个节点](https://leetcode-cn.com/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/)  
+
+使用双指针则可以不用统计链表长度  
+<div align="center"> <img src="pic/JZ22.png"/> </div>  
+
+初始化： 前指针 former 、后指针 latter ，双指针都指向头节点 head​ 。
+构建双指针距离： 前指针 former 先向前走 kk 步（结束后，双指针 former 和 latter 间相距 kk 步）。
+双指针共同移动： 循环中，双指针 former 和 latter 每轮都向前走一步，直至 former 走过链表 尾节点 时跳出（跳出后， latter 与尾节点距离为 k-1k−1，即 latter 指向倒数第 kk 个节点）。
+返回值： 返回 latter 即可。
+
+```cpp
+
+class Solution {
+public:
+	ListNode* getKthFromEnd(ListNode* head, int k) {
+		ListNode* slow = head, *fast = head;
+		for (int i = 0; i < k; i++)
+		{
+			fast = fast->next;
+		}
+
+		while (fast)
+		{
+			slow = slow->next;
+			fast = fast->next;
+		}
+
+		return slow;
+
+	}
+};
+```  
+ 
+## [面试题24. 反转链表](https://leetcode-cn.com/problems/fan-zhuan-lian-biao-lcof/)   
+
+双指针  
+我们可以申请两个指针，第一个指针叫 pre，最初是指向 null 的。
+第二个指针 cur 指向 head，然后不断遍历 cur。
+每次迭代到 cur，都将 cur 的 next 指向 pre，然后 pre 和 cur 前进一位。
+都迭代完了(cur 变成 null 了)，pre 就是最后一个节点了。
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* cur=head;
+        ListNode* pre=nullptr;
+        while(cur)
+        {
+            ListNode* tmp=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=tmp;
+        }
+        return pre;
+    }
+};
+
+```
+
+## [面试题25. 合并两个排序的链表](https://leetcode-cn.com/problems/he-bing-liang-ge-pai-xu-de-lian-biao-lcof/)  
+
+```cpp
+
+class Solution {
+public:
+	ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+		ListNode* head = new ListNode(0),*cur=head;
+		while (l1&&l2)
+		{
+			if (l1->val < l2->val) {
+				cur->next = l1;
+				l1 = l1->next;
+			}
+			else
+			{
+				cur->next = l2;
+				l2 = l2->next;
+			}
+			cur = cur->next;
+		}
+
+		cur->next = (l1 ? l1 : l2);
+		return head->next;
+	}
+};
+
+```
+
+## [面试题26. 树的子结构](https://leetcode-cn.com/problems/shu-de-zi-jie-gou-lcof/)
+
+若树 BB 是树 AA 的子结构，则子结构的根节点可能为树 AA 的任意一个节点。因此，判断树 BB 是否是树 AA 的子结构，需完成以下两步工  
+先序遍历树 AA 中的每个节点 n_An 
+A
+​	
+  ；（对应函数 isSubStructure(A, B)）
+判断树 AA 中 以 n_An 
+A
+​	
+  为根节点的子树 是否包含树 BB 。（对应函数 recur(A, B)）    
+
+<div align="center"> <img src="pic/JZ26.png"/> </div>    
+
+名词规定：树 AA 的根节点记作 节点 AA ，树 BB 的根节点称为 节点 BB 。   
+
+recur(A, B) 函数  
+终止条件：
+当节点 BB 为空：说明树 BB 已匹配完成（越过叶子节点），因此返回 truetrue ；
+当节点 AA 为空：说明已经越过树 AA 叶子节点，即匹配失败，返回 falsefalse ；
+当节点 AA 和 BB 的值不同：说明匹配失败，返回 falsefalse ；
+返回值：
+判断 AA 和 BB 的左子节点是否相等，即 recur(A.left, B.left) ；
+判断 AA 和 BB 的右子节点是否相等，即 recur(A.right, B.right) ；
+
+```cpp
+class Solution {
+public:
+
+	bool recur(TreeNode* A, TreeNode* B) {
+		if (B == nullptr) return true;
+		if (A == nullptr || A->val != B->val) return false;
+		
+		return recur(A->left,B->left)&&recur(A->right,B->right);
+
+	}
+
+	bool isSubStructure(TreeNode* A, TreeNode* B) {
+	
+		return(A!=nullptr&&B!=nullptr) && recur(A, B) || isSubStructure(A->left, B) ||  isSubStructure(A->right,B);
+	}
+};
+
+```  
+
+## [面试题27. 二叉树的镜像](https://leetcode-cn.com/problems/er-cha-shu-de-jing-xiang-lcof/)  
+
+方法一：递归法 
+```cpp
+class Solution {
+public:
+	TreeNode* mirrorTree(TreeNode* root) {
+		if (root == nullptr) return nullptr;
+		TreeNode* tmp = root->left;
+		root->left = mirrorTree(root->right);
+		root->right = mirrorTree(tmp);
+		return root;
+
+	}
+};
+
+```
+
+方法二：辅助栈（或队列）  
+
+```
+class Solution {
+public:
+	TreeNode* mirrorTree(TreeNode* root) {
+		if (root == nullptr) return nullptr;
+		
+
+		stack<TreeNode*> st;
+
+		st.push(root);
+		while (!st.empty())
+		{
+			TreeNode * node = st.top();    st.pop();
+			if (node->left)  st.push(node->left);
+			if (node->right)  st.push(node->right);
+
+			TreeNode *tmp = node->left;
+			node->left = node->right;
+			node->right = tmp;
+		}
+		return root;
+
+	}
+};
+
+```
+
+## [面试题28. 对称的二叉树](https://leetcode-cn.com/problems/dui-cheng-de-er-cha-shu-lcof/)
+
+方法一： 递归法
+```
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        bool res = true;
+        if (root!=NULL)
+        {
+            res = helper(root->left,root->right);
+        }
+        return res;
+    }
+
+    bool helper(TreeNode*A, TreeNode* B)
+    {
+        // 先写递归终止条件
+        if (A==NULL && B==NULL)
+            return true;
+        // 如果其中之一为空，也不是对称的
+        if (A==NULL || B==NULL)
+            return false;
+        // 走到这里二者一定不为空
+        if (A->val != B->val)
+            return false;
+        // 前序遍历
+        return helper(A->left,B->right) && helper(A->right,B->left);
+    }
+};
+
+```
+
+
+方法二： 迭代法
+```cpp
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        if (root ==NULL)
+            return true;
+        //用队列保存节点
+        queue<TreeNode*> q;
+        //将根节点的左右孩子放到队列中
+        q.push(root->left);
+        q.push(root->right);
+        while(!q.empty())
+        {
+            //从队列中取出两个节点，再比较这两个节点
+            TreeNode* A = q.front();
+            q.pop();
+            TreeNode* B = q.front();
+            q.pop();
+            //如果两个节点都为空就继续循环，两者有一个为空就返回false
+            if (A==NULL && B==NULL)
+                continue;
+            if (A==NULL || B==NULL)
+                return false;
+            if (A->val != B->val)
+                return false;
+            //将左子树的左孩子， 右子树的右孩子放入队列
+            q.push(A->left);
+            q.push(B->right);
+            //将左子树的右孩子，右子树的左孩子放入队列
+            q.push(A->right);
+            q.push(B->left);
+        }
+        return true;
+    }
+};
+```  
+
+
+## [面试题29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)  
+
+打印矩阵的顺序是 “从左向右、从上向下、从右向左、从下向上” 循环  
+因此，考虑设定矩阵的“左、上、右、下”四个边界，模拟以上矩阵遍历顺序。 
+
+```cpp
+
+class Solution {
+public:
+	vector<int> spiralOrder(vector<vector<int>>& matrix) {
+		if (matrix.size() == 0) return vector<int>(0,0);
+
+		int l = 0, r = matrix[0].size() - 1, 
+			t = 0, b = matrix.size() - 1, 
+			x = 0;
+
+		vector<int> res((r + 1)*(b + 1));
+
+		while (true)
+		{
+			for (int i = l; i <= r; i++) res[x++] = matrix[t][i]; // left to right.
+			if (++t > b) break;
+			for (int i = t; i <= b; i++) res[x++] = matrix[i][r]; // top to bottom.
+			if (l > --r) break;
+			for (int i = r; i >= l; i--) res[x++] = matrix[b][i]; // right to left.
+			if (t > --b) break;
+			for (int i = b; i >= t; i--) res[x++] = matrix[i][l]; // bottom to top.
+			if (++l > r) break;
+
+		}
+
+		return res;
+
+	}
+};
+```  
+
+## [面试题30. 包含min函数的栈](https://leetcode-cn.com/problems/bao-han-minhan-shu-de-zhan-lcof/)  
+
+解题思路 
+
+数据栈 AA ： 栈 AA 用于存储所有元素，保证入栈 push() 函数、出栈 pop() 函数、获取栈顶 top() 函数的正常逻辑。
+辅助栈 BB ： 栈 BB 中存储栈 AA 中所有 非严格降序 的元素，则栈 AA 中的最小元素始终对应栈 BB 的栈顶元素，即 min() 函数只需返回栈 BB 的栈顶元素即可。
+
+<div align="center"> <img src="pic/JZ30.png"/> </div>    
+
+```cpp
+
+
+class MinStack {
+public:
+	/** initialize your data structure here. */
+	MinStack() {
+
+	}
+
+	void push(int x) {
+		A.push(x);
+		if (B.empty()||B.top()>=x) {
+			B.push(x);
+		}
+	}
+
+	void pop() {
+
+		if (A.top() == B.top()) {
+			B.pop();
+		}
+		A.pop();
+
+	}
+
+	int top() {
+		return A.top();
+	}
+
+	int min() {
+		return B.top();
+	}
+
+	stack<int> A, B;
+};
 
 
 
+```
+
+## [面试题31. 栈的压入、弹出序列](https://leetcode-cn.com/problems/zhan-de-ya-ru-dan-chu-xu-lie-lcof/)  
+模拟入栈操作，贪心算法  
+
+思路很简单，我们尝试按照 popped 中的顺序模拟一下出栈操作，如果符合则返回 true，否则返回 false。这里用到的贪心法则是如果栈顶元素等于 popped 序列中下一个要 pop 的值，则应立刻将该值 pop 出来。  
+
+我们使用一个栈 st 来模拟该操作。将 pushed 数组中的每个数依次入栈，同时判断这个数是不是 popped 数组中下一个要 pop 的值，如果是就把它 pop 出来。最后检查栈是否为空。    
+
+算法  
+
+初始化栈 stack，j = 0；
+遍历 pushed 中的元素 x；
+当 j < popped.size() 且栈顶元素等于 popped[j]：
+弹出栈顶元素；
+j += 1；
+如果栈为空，返回 True，否则返回 False。  
+
+```
+class Solution {
+public:
+	bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+		stack<int>  st;
+
+		int n = popped.size();
+		int j = 0;
+		for (int i = 0; i < pushed.size(); i++)
+		{
+			st.push(pushed[i]);
+
+			while (!st.empty()&&j<n&&st.top()==popped[j])
+			{
+				st.pop();
+				++j;
+			}
+		}
+
+		return st.empty();
+	}
+};
+
+```  
+
+## [面试题32 - I. 从上到下打印二叉树](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-lcof/)
+
+题目要求的二叉树的 从上至下 打印（即按层打印），又称为二叉树的 广度优先搜索（BFS）。
+BFS 通常借助 队列 的先入先出特性来实现 
+
+```cpp
+
+class Solution {
+public:
+	vector<int> levelOrder(TreeNode* root) {
+		if (root == nullptr) return vector<int>(0);
+
+		queue<TreeNode*> que; que.push(root);
+		vector<int>  ans;
+
+		while (!que.empty())
+		{
+			TreeNode*node = que.front(); que.pop();
+			ans.push_back(node->val);
+
+			if (node->left) que.push(node->left);
+			if (node->right) que.push(node->right);
+		}
+
+		return ans;
+
+	}
+};
+
+```
+ 
+## [面试题32 - II. 从上到下打印二叉树 II](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-ii-lcof/)  
+
+BFS 循环： 当队列 queue 为空时跳出；
+
+新建一个临时列表 tmp ，用于存储当前层打印结果；
+当前层打印循环： 循环次数为队列 queue 长度（队列中元素为所有当前层节点）；
+出队： 队首元素出队，记为 node；
+打印： 将 node.val 添加至列表 tmp 尾部；
+添加子节点： 若 node 的左（右）子节点不为空，则将左（右）子节点加入队列 queue ；
+将当前层结果 tmp 添加入 res 。
+
+```cpp
+
+class Solution {
+public:
+	vector<vector<int>> levelOrder(TreeNode* root) {
+
+		if (root == nullptr) return vector<vector<int>>(0);
+		queue<TreeNode*> que; que.push(root);
+		vector<vector<int>> ans;
+
+		while (!que.empty())
+		{
+			vector<int> res;
+			for (int i = 0; i < que.size(); i++)
+			{
+				TreeNode*node = que.front(); que.pop();
+				res.push_back(node->val);
+
+				if (node->left) que.push(node->left);
+				if (node->right) que.push(node->right);
+
+			}
+			ans.push_back(res);
+		}
+		return ans;
+	}
+};
 
 
+```
 
+## [面试题32 - III. 从上到下打印二叉树 III](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/)  
+
+方法：双端队列 
+
+特例处理： 当树的根节点为空，则直接返回空列表 [] ；
+初始化： 打印结果列表 res = [] ，包含根节点的双端队列 deque = [root] ；
+BFS 循环： 循环打印奇 / 偶树层，当 deque 为空时跳出；
+打印奇数层： 从左向右打印，先左后右加入下层节点；
+若 deque 为空，说明向下无偶数层，则跳出；
+打印偶数层： 从右向左打印，先右后左加入下层节点；
+返回值： 返回打印结果列表 res 即可；
+
+```cpp
+class Solution {
+public:
+	vector<vector<int>> levelOrder(TreeNode* root) {
+		vector<vector<int>> res;
+		if (root == NULL)
+			return res;
+		bool flag = true; //从左向右打印为true，从右向左打印为false
+		deque<TreeNode*> q;
+		q.push_back(root);
+		while (!q.empty())
+		{
+			int n = q.size();
+			vector<int> out;
+			TreeNode* node;
+			while (n > 0)
+			{
+				if (flag) // 前取后放：从左向右打印，所以从前边取，后边放入
+				{
+					node = q.front();
+					q.pop_front();
+					if (node->left)
+						q.push_back(node->left);  // 下一层顺序存放至尾
+					if (node->right)
+						q.push_back(node->right);
+				}
+				else  //后取前放： 从右向左，从后边取，前边放入
+				{
+					node = q.back();
+					q.pop_back();
+					if (node->right)
+						q.push_front(node->right);  // 下一层逆序存放至首
+					if (node->left)
+						q.push_front(node->left);
+				}
+				out.push_back(node->val);
+				n--;
+			}
+			flag = !flag;
+			res.push_back(out);
+		}
+		return res;
+	}
+};
+
+```  
+
+## [面试题33. 二叉搜索树的后序遍历序列](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/)  
+
+
+方法一：递归分治  
+
+根据二叉搜索树的定义，可以通过递归，判断所有子树的 正确性 （即其后序遍历是否满足二叉搜索树的定义） ，若所有子树都正确，则此序列为二叉搜索树的后序遍历。  
+
+终止条件： 当 i \geq ji≥j ，说明此子树节点数量 \leq 1≤1 ，无需判别正确性，因此直接返回 truetrue ；
+递推工作：
+划分左右子树： 遍历后序遍历的 [i, j][i,j] 区间元素，寻找 第一个大于根节点 的节点，索引记为 mm 。此时，可划分出左子树区间 [i,m-1][i,m−1] 、右子树区间 [m, j - 1][m,j−1] 、根节点索引 jj 。
+判断是否为二叉搜索树：
+左子树区间 [i, m - 1][i,m−1] 内的所有节点都应 << postorder[j]postorder[j] 。而第 1.划分左右子树 步骤已经保证左子树区间的正确性，因此只需要判断右子树区间即可。
+右子树区间 [m, j-1][m,j−1] 内的所有节点都应 >> postorder[j]postorder[j] 。实现方式为遍历，当遇到 \leq postorder[j]≤postorder[j] 的节点则跳出；则可通过 p = jp=j 判断是否为二叉搜索树。
+返回值： 所有子树都需正确才可判定正确，因此使用 与逻辑符 \&\&&& 连接。
+p = jp=j ： 判断 此树 是否正确。
+recur(i, m - 1)recur(i,m−1) ： 判断 此树的左子树 是否正确。
+recur(m, j - 1)recur(m,j−1) ： 判断 此树的右子树 是否正确。  
 
 
