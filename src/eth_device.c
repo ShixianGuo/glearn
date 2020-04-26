@@ -29,4 +29,6 @@ static struct net_device*nic_dev;
 static struct net_device_ops * nic_dev_ops={
     .ndo_open = nic_open,
 	.ndo_stop = nic_stop
+
+	
 };
