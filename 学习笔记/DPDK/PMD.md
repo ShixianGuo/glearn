@@ -9,6 +9,8 @@ PMD是Poll Mode Driver的缩写，即基于用户态的轮询机制的驱动。
 
 # dpdk_devbind.py
 
+## 概述
+
 dpdk_devbind.py程序主要做了以下几件事(转为shell命令)：
 * 1. 为igb_uio驱动添加设备id ： 
     - echo –n “8086 10f5” > /sys/bus/pci/drivers/igb_uio/new_id
@@ -29,6 +31,8 @@ dpdk_devbind.py程序主要做了以下几件事(转为shell命令)：
 2. sysfs，用于用户态与内核态进行通讯。 (new_id, driver_override, bind, unbind)
 3. 传递的消息:设备ID、设备标识
 
+## 分析
+===============================================================
 当使用DPDK脚本dpdk-devbind来bind网卡时，会通过sysfs与内核交互，让内核使用指定驱动来匹配网卡。
 * 具体的行为向/sys/bus/pci/devices/(pci id)/driver_override写入指定驱动名称，
 * 或者向/sys/bus/pci/drivers/igb_uio(驱动名称）/new_id写入要绑定网卡的PCI ID。
@@ -77,6 +81,9 @@ uio模块除了实现了上面的“事件”通知，还支持了mmap方法
 
 
 # PMD驱动分析
+
+## 模块与PMD的关系
+
 dpdk接管网卡时涉及uio、igb_uio等内核驱动模块，那么dpdk的PMD驱动与这些模块之间是什么样的关系呢？
 * 其实dpdk是借助了linux内核提供的uio用户态IO驱动框架来实现的。
 * UIO分为用户态（dpdk PMD）与内核态两部分(igb_uio)以及UIO框架本身。
